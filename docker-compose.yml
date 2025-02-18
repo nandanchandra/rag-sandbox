@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:0.5.11
+    container_name: ollama-rag
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh:ro
+    networks:
+      - rag-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    tty: true 
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis-rag
+    restart: always
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    driver: local
+  redis_data:
+    driver: local
